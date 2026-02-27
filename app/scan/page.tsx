@@ -34,7 +34,7 @@ function ScanContent() {
         return;
       }
 
-      if (session.user.role !== "STUDENT") {
+      if ((session.user as any).role === "STUDENT") {
         setStatus("error");
         setMessage("เฉพาะนักเรียนเท่านั้นที่สามารถเช็คชื่อได้");
         return;
@@ -47,7 +47,7 @@ function ScanContent() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ 
             date: qrDate, 
-            studentId: session.user.id 
+            studentId: (session.user as any).id 
           }),
         });
 
