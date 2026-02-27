@@ -6,59 +6,54 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { startCode, endCode, subjectId, term } = body;
 
-    // 1. ค้นหานักเรียนทั้งหมดที่มีรหัสอยู่ในช่วงนี้
+    // 1. ค้นหานักเรียนที่มีรหัสในช่วงที่ระบุ
     const students = await prisma.user.findMany({
       where: {
         role: "STUDENT",
-        code: {
-          gte: startCode,
-          lte: endCode,
-        }
-      },
-      select: { id: true, code: true }
+        code: { gte: startCode, lte: endCode }
+      }
     });
 
     if (students.length === 0) {
-      return NextResponse.json({ error: "ไม่พบรหัสนักเรียนในช่วงที่ระบุ" }, { status: 404 });
+      return NextResponse.json({ error: "ไม่พบรหัสนักเรียนในช่วงรหัสที่ระบุ" }, { status: 404 });
     }
 
     let successCount = 0;
+    let skipCount = 0;
 
-    // 2. ใช้ท่าไม้ตาย: วนลูปจับนักเรียนใส่ทีละคน เพื่อป้องกัน Error จากฐานข้อมูล
+    // 2. วนลูปเช็คและสร้าง Enrollment ทีละคน
     for (const student of students) {
-      try {
-        // เช็คก่อนว่าเด็กคนนี้เคยลงทะเบียนวิชานี้ไปหรือยัง จะได้ไม่ซ้ำ
-        const existingEnrollment = await prisma.enrollment.findFirst({
-          where: { 
-            studentId: student.id, 
-            subjectId: subjectId 
+      // ตรวจสอบก่อนว่าเคยลงทะเบียนวิชานี้ในเทอมนี้ไปหรือยัง (ป้องกัน @@unique error)
+      const existing = await prisma.enrollment.findUnique({
+        where: {
+          studentId_subjectId_term: {
+            studentId: student.id,
+            subjectId: subjectId,
+            term: term
+          }
+        }
+      });
+
+      if (!existing) {
+        await prisma.enrollment.create({
+          data: {
+            studentId: student.id,
+            subjectId: subjectId,
+            term: term
           }
         });
-
-        // ถ้ายังไม่เคยลงวิชานี้ ค่อยบันทึกใหม่
-        if (!existingEnrollment) {
-          await prisma.enrollment.create({
-            data: {
-              studentId: student.id,
-              subjectId: subjectId,
-              term: term || "1/2569",
-              // หมายเหตุ: เอา gradeResult ออกไปก่อน เพราะใน schema อาจจะไม่มีฟิลด์นี้
-            }
-          });
-          successCount++;
-        }
-      } catch (innerError) {
-        console.error(`ไม่สามารถบันทึกเด็ก ${student.code} ได้:`, innerError);
+        successCount++;
+      } else {
+        skipCount++;
       }
     }
 
     return NextResponse.json({ 
-      message: `นำนักเรียนเข้าวิชาสำเร็จ ${successCount} คน (จากที่พบทั้งหมด ${students.length} คน)` 
+      message: `สำเร็จ! ลงทะเบียนใหม่ ${successCount} คน (ข้ามคนที่เคยลงแล้ว ${skipCount} คน)` 
     });
 
   } catch (error: any) {
-    console.error("Bulk Enroll Error:", error);
-    // ✨ อัปเกรดระบบ Error ให้คายคำพูดของจริงออกมา จะได้รู้ว่าพังเพราะอะไร!
-    return NextResponse.json({ error: `ระบบขัดข้อง: ${error.message}` }, { status: 500 });
+    console.error("Enroll Error:", error);
+    return NextResponse.json({ error: `เกิดข้อผิดพลาด: ${error.message}` }, { status: 500 });
   }
 }
