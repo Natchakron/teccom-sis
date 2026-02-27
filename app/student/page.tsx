@@ -34,9 +34,12 @@ export default function StudentPage() {
       if (session?.user) {
         setUser(session.user);
         
-        // 🌟 ฟีเจอร์ใหม่: ดึงรูปโปรไฟล์ล่าสุดจาก Database ทันทีที่โหลดหน้า
+        // 🚀 สร้างตัวแปรมารับค่าแบบสับขาหลอก Vercel ไปเลยทีเดียว
+        const userId = (session.user as any).id;
+        
+        // 🌟 ดึงรูปโปรไฟล์ล่าสุด
         try {
-          const resProfile = await fetch(`/api/upload-profile?userId=${session.user.id}`);
+          const resProfile = await fetch(`/api/upload-profile?userId=${userId}`);
           if (resProfile.ok) {
             const profileData = await resProfile.json();
             if (profileData?.image) {
@@ -47,21 +50,21 @@ export default function StudentPage() {
 
         // 1. ดึงประวัติเข้าแถว
         try {
-          const resAtt = await fetch(`/api/my-attendance?studentId=${session.user.id}`);
+          const resAtt = await fetch(`/api/my-attendance?studentId=${userId}`);
           const dataAtt = await resAtt.json();
           if (Array.isArray(dataAtt)) setAttendanceRecords(dataAtt);
         } catch (error) {}
 
         // 2. ดึงข้อมูลเกรด
         try {
-          const resGrades = await fetch(`/api/my-grades?studentId=${session.user.id}`);
+          const resGrades = await fetch(`/api/my-grades?studentId=${userId}`);
           const dataGrades = await resGrades.json();
           if (Array.isArray(dataGrades)) setMyGrades(dataGrades);
         } catch (error) {}
 
         // 3. ดึงตารางเรียน
         try {
-          const resSched = await fetch(`/api/schedules?studentId=${session.user.id}`);
+          const resSched = await fetch(`/api/schedules?studentId=${userId}`);
           const dataSched = await resSched.json();
           if (Array.isArray(dataSched)) {
             const daysOrder = ["วันจันทร์", "วันอังคาร", "วันพุธ", "วันพฤหัสบดี", "วันศุกร์", "วันเสาร์", "วันอาทิตย์"];
@@ -77,7 +80,7 @@ export default function StudentPage() {
 
         // 4. ดึงประวัติการลา
         try {
-          const resLeave = await fetch(`/api/leave-requests?studentId=${session.user.id}`);
+          const resLeave = await fetch(`/api/leave-requests?studentId=${userId}`);
           const dataLeave = await resLeave.json();
           if (Array.isArray(dataLeave)) setLeaveRecords(dataLeave);
         } catch (error) {}
@@ -91,7 +94,7 @@ export default function StudentPage() {
 
         // 6. ดึงข้อมูลคะแนนความประพฤติ
         try {
-          const resBehav = await fetch(`/api/behavior?studentId=${session.user.id}`);
+          const resBehav = await fetch(`/api/behavior?studentId=${userId}`);
           const dataBehav = await resBehav.json();
           if (Array.isArray(dataBehav)) {
              setBehaviorRecords(dataBehav);
