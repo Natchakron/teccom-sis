@@ -22,6 +22,7 @@ model User {
   leaveRequests LeaveRequest[]
   behaviorRecords BehaviorRecord[]
   image     String?  @db.Text
+  schedules   Schedule[]
   // ลบ grades ออก เพราะนักเรียนจะดูเกรดผ่านตาราง Enrollment แทน
 }
 
@@ -146,4 +147,22 @@ model BehaviorRecord {
   studentId String
   student   User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
+}
+
+model Schedule {
+  id          String   @id @default(cuid())
+  subjectCode String   // รหัสวิชา (เช่น 30204-2001)
+  subjectName String   // ชื่อวิชา
+  teacherName String   // ชื่ออาจารย์ผู้สอน
+  dayOfWeek   String   // วันที่เรียน (เช่น วันจันทร์, วันอังคาร)
+  startTime   String   // เวลาเริ่มเรียน (เช่น 08:30)
+  endTime     String   // เวลาเลิกเรียน (เช่น 12:30)
+  room        String   // ห้องเรียน (เช่น 424)
+
+  // ผูกความสัมพันธ์ว่าวิชานี้เป็นของนักเรียนคนไหน
+  studentId   String
+  student     User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
