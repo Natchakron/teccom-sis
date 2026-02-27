@@ -1,0 +1,149 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String              @id @default(uuid())
+  code          String              @unique
+  password      String
+  firstName     String
+  lastName      String
+  role          Role                @default(STUDENT)
+  subjects      Subject[] // สำหรับอาจารย์: วิชาที่สอน
+  enrollments   Enrollment[] // สำหรับนักเรียน: วิชาที่ลงทะเบียนเรียน
+  morningChecks MorningAttendance[] // สำหรับนักเรียน: ประวัติสแกนเข้าแถว
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  leaveRequests LeaveRequest[]
+  behaviorRecords BehaviorRecord[]
+  image
+  // ลบ grades ออก เพราะนักเรียนจะดูเกรดผ่านตาราง Enrollment แทน
+}
+
+enum Role {
+  ADMIN
+  TEACHER
+  STUDENT
+}
+
+model SystemSetting {
+  id              Int     @id @default(1)
+  isMorningScanOn Boolean @default(true)
+  scanStartTime   String  @default("07:50")
+  scanEndTime     String  @default("08:30")
+}
+
+model MorningAttendance {
+  id        String     @id @default(uuid())
+  date      DateTime   @db.Date
+  timeIn    DateTime
+  status    ScanStatus
+  studentId String
+  student   User       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([date, studentId])
+}
+
+enum ScanStatus {
+  PRESENT
+  LATE
+  ABSENT
+  LEAVE
+}
+
+model Subject {
+  id          String       @id @default(uuid())
+  subjectCode String       @unique
+  name        String
+  credit      Int
+  teacherId   String
+  teacher     User         @relation(fields: [teacherId], references: [id])
+  enrollments Enrollment[]
+  schedules   ClassSchedule[]
+}
+
+// ตารางลงทะเบียนเรียน (เชื่อม นักเรียน + วิชา + เทอมเข้าด้วยกัน)
+model Enrollment {
+  id          String            @id @default(uuid())
+  term        String // เช่น "1/2569"
+  studentId   String
+  student     User              @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  subjectId   String
+  subject     Subject           @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  classChecks ClassAttendance[]
+  grade       Grade? // 1 การลงทะเบียน มี 1 ผลการเรียน
+
+  @@unique([studentId, subjectId, term])
+}
+
+model ClassAttendance {
+  id           String     @id @default(uuid())
+  date         DateTime   @db.Date
+  status       ScanStatus
+  enrollmentId String
+  enrollment   Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+}
+
+// ตารางเก็บผลการเรียน
+model Grade {
+  id           String     @id @default(uuid())
+  midtermScore Float      @default(0)
+  finalScore   Float      @default(0)
+  totalScore   Float      @default(0)
+  gradeResult  String? // เก็บเกรด เช่น "4.0", "3.5", "B+"
+  enrollmentId String     @unique
+  enrollment   Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+}
+
+// ตารางสอน / ตารางเรียน
+model ClassSchedule {
+  id          String   @id @default(uuid())
+  dayOfWeek   String   // เช่น "วันจันทร์", "วันอังคาร"
+  startTime   String   // เช่น "08:30"
+  endTime     String   // เช่น "10:30"
+  room        String   // เช่น "Lab Com 1"
+  subjectId   String
+  subject     Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+}
+
+// ตารางเก็บข้อมูลการลาหยุด
+model LeaveRequest {
+  id        String      @id @default(uuid())
+  startDate DateTime    @db.Date
+  endDate   DateTime    @db.Date
+  reason    String      @db.Text
+  status    LeaveStatus @default(PENDING) // รออนุมัติ, อนุมัติ, ไม่อนุมัติ
+  studentId String
+  student   User        @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  createdAt DateTime    @default(now())
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// ตารางประกาศข่าวสาร
+model Announcement {
+  id        String   @id @default(uuid())
+  title     String   // หัวข้อประกาศ
+  content   String   @db.Text // เนื้อหา (พิมพ์ยาวๆ ได้)
+  type      String   @default("INFO") // ประเภท: INFO (ทั่วไป), WARNING (สำคัญ), URGENT (ด่วนมาก)
+  createdAt DateTime @default(now())
+}
+
+// ตารางเก็บประวัติคะแนนความประพฤติ
+model BehaviorRecord {
+  id        String   @id @default(uuid())
+  points    Int      // แต้มที่ถูกหักหรือเพิ่ม เช่น -10, -5, +5
+  reason    String   @db.Text // สาเหตุที่หัก/เพิ่ม
+  studentId String
+  student   User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
