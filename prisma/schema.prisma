@@ -21,7 +21,7 @@ model User {
   updatedAt     DateTime            @updatedAt
   leaveRequests LeaveRequest[]
   behaviorRecords BehaviorRecord[]
-  image
+  image     String?  @db.Text
   // ลบ grades ออก เพราะนักเรียนจะดูเกรดผ่านตาราง Enrollment แทน
 }
 
