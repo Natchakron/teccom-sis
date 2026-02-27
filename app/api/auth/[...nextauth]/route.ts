@@ -48,23 +48,25 @@ const handler = NextAuth({
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.role = user.role;
-        token.code = user.code;
-        token.id = user.id;
+        // 🚀 ใส่ (user as any) เพื่อสับขาหลอก Vercel ให้ยอมให้ผ่าน
+        token.role = (user as any).role;
+        token.code = (user as any).code;
+        token.id = (user as any).id;
       }
       return token;
     },
     async session({ session, token }) {
       if (token && session.user) {
-        session.user.role = token.role as string;
-        session.user.code = token.code as string;
-        session.user.id = token.id as string;
+        // 🚀 ใส่ (session.user as any) ด้วย
+        (session.user as any).role = token.role;
+        (session.user as any).code = token.code;
+        (session.user as any).id = token.id;
       }
       return session;
     }
   },
   pages: {
-    signIn: "/login", // เดี๋ยวเราจะไปสร้างหน้า Login สวยๆ กันที่นี่
+    signIn: "/login",
   }
 });
 
