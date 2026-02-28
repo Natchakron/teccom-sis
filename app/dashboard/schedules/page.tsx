@@ -84,14 +84,14 @@ export default function SchedulesPage() {
             <CalendarDays className="text-purple-500" size={36} />
             จัดการตารางเรียน
           </h1>
-          <p className="text-slate-500 font-medium mt-1">จัดตารางสอนของอาจารย์และห้องเรียน</p>
+          <p className="text-slate-500 font-medium mt-1 print:hidden">จัดตารางสอนของอาจารย์และห้องเรียน</p>
         </motion.div>
 
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="flex gap-3">
           {/* ปุ่มเอานักเรียนเข้าวิชา */}
           <button
             onClick={() => setActiveForm(activeForm === 'enroll' ? 'none' : 'enroll')}
-            className={`${activeForm === 'enroll' ? 'bg-slate-700' : 'bg-blue-600 hover:bg-blue-700'} text-white px-5 py-2.5 rounded-xl font-medium flex items-center gap-2 shadow-lg shadow-blue-500/30 transition-all`}
+            className={`${activeForm === 'enroll' ? 'bg-slate-700' : 'bg-blue-600 hover:bg-blue-700'} text-white px-5 py-2.5 rounded-xl font-medium flex items-center gap-2 shadow-lg shadow-blue-500/30 transition-all print:hidden`}
           >
             {activeForm === 'enroll' ? <X size={20} /> : <Users size={20} />}
             {activeForm === 'enroll' ? "ปิดฟอร์ม" : "จัดนักเรียนเข้าวิชา"}
@@ -100,19 +100,27 @@ export default function SchedulesPage() {
           {/* ปุ่มเพิ่มตารางเรียน */}
           <button
             onClick={() => setActiveForm(activeForm === 'schedule' ? 'none' : 'schedule')}
-            className={`${activeForm === 'schedule' ? 'bg-slate-700' : 'bg-purple-600 hover:bg-purple-700'} text-white px-5 py-2.5 rounded-xl font-medium flex items-center gap-2 shadow-lg shadow-purple-500/30 transition-all`}
+            className={`${activeForm === 'schedule' ? 'bg-slate-700' : 'bg-purple-600 hover:bg-purple-700'} text-white px-5 py-2.5 rounded-xl font-medium flex items-center gap-2 shadow-lg shadow-purple-500/30 transition-all print:hidden`}
           >
             {activeForm === 'schedule' ? <X size={20} /> : <PlusCircle size={20} />}
             {activeForm === 'schedule' ? "ปิดฟอร์ม" : "เพิ่มตารางเรียน"}
+          </button>
+
+          {/* ปุ่มพิมพ์ตารางเรียน */}
+          <button
+            onClick={() => window.print()}
+            className="bg-slate-800 hover:bg-slate-900 text-white px-5 py-2.5 rounded-xl font-medium flex items-center gap-2 shadow-lg transition-all print:hidden"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9V2h12v7"></path><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+            พิมพ์ตารางเรียน
           </button>
         </motion.div>
       </div>
 
       <AnimatePresence mode="wait">
-        
         {/* ================= ฟอร์ม 1: จัดนักเรียนเข้าวิชา ================= */}
         {activeForm === 'enroll' && (
-          <motion.div key="enroll" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
+          <motion.div key="enroll" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden print:hidden">
             <div className="bg-blue-50 p-6 rounded-2xl shadow-xl shadow-slate-200/50 border border-blue-100 mb-8">
               <h2 className="text-lg font-bold text-blue-800 mb-4 flex items-center gap-2"><Users size={20}/> นำนักเรียนเข้าศึกษารายวิชานี้ (ทั้งกลุ่ม)</h2>
               
@@ -154,7 +162,7 @@ export default function SchedulesPage() {
 
         {/* ================= ฟอร์ม 2: สร้างตารางสอน ================= */}
         {activeForm === 'schedule' && (
-          <motion.div key="schedule" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
+          <motion.div key="schedule" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden print:hidden">
             <div className="bg-white p-6 rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-100 mb-8">
               <form onSubmit={handleSubmitSchedule} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
                 <div className="md:col-span-2 lg:col-span-2">
@@ -193,21 +201,28 @@ export default function SchedulesPage() {
             </div>
           </motion.div>
         )}
-
       </AnimatePresence>
 
+      {/* ================= ส่วนหัวที่จะแสดงเฉพาะตอนปริ้นเท่านั้น ================= */}
+      <div className="hidden print:block mb-8 text-center border-b-2 border-slate-800 pb-4">
+        <h1 className="text-3xl font-bold text-black mb-1">TECCOM SIS - ตารางเรียน</h1>
+        <p className="text-lg text-slate-700 font-medium">วิทยาลัยเทคนิคชัยนาท แผนกเทคโนโลยีคอมพิวเตอร์</p>
+        <p className="text-sm mt-2 text-slate-500">พิมพ์เมื่อวันที่: {new Date().toLocaleDateString('th-TH')}</p>
+      </div>
+
       {/* ================= ตารางแสดงผลที่สร้างไว้ ================= */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* 🚀 ปรับ print:grid-cols-2 เพื่อให้พอดีกับกระดาษ A4 แนวตั้ง */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 print:grid-cols-2 print:gap-4">
         {Array.isArray(schedules) && schedules.map((item) => (
-          <div key={item.id} className="bg-white p-5 rounded-2xl shadow-lg border border-slate-100 hover:-translate-y-1 transition-transform">
+          <div key={item.id} className="bg-white p-5 rounded-2xl shadow-lg border border-slate-100 hover:-translate-y-1 transition-transform print:shadow-none print:border-slate-300 print:break-inside-avoid">
             <div className="flex justify-between items-start mb-3">
-              <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs font-bold">{item.dayOfWeek}</span>
-              <span className="text-slate-400 text-sm flex items-center gap-1"><Clock size={14}/> {item.startTime} - {item.endTime}</span>
+              <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs font-bold print:bg-slate-100 print:text-slate-800">{item.dayOfWeek}</span>
+              <span className="text-slate-400 text-sm flex items-center gap-1 print:text-slate-700"><Clock size={14}/> {item.startTime} - {item.endTime}</span>
             </div>
-            <h3 className="font-bold text-slate-800 text-lg">{item.subject?.name}</h3>
-            <p className="text-slate-500 text-sm mb-4">รหัสวิชา: {item.subject?.subjectCode}</p>
-            <div className="bg-slate-50 p-3 rounded-xl flex items-center gap-2 text-slate-600 text-sm border border-slate-100">
-              <MapPin size={16} className="text-rose-500" /> ห้อง: <span className="font-semibold">{item.room}</span>
+            <h3 className="font-bold text-slate-800 text-lg print:text-black">{item.subject?.name}</h3>
+            <p className="text-slate-500 text-sm mb-4 print:text-slate-600">รหัสวิชา: {item.subject?.subjectCode}</p>
+            <div className="bg-slate-50 p-3 rounded-xl flex items-center gap-2 text-slate-600 text-sm border border-slate-100 print:bg-white print:border-slate-300 print:text-slate-800">
+              <MapPin size={16} className="text-rose-500 print:text-slate-600" /> ห้อง: <span className="font-semibold">{item.room}</span>
             </div>
           </div>
         ))}
